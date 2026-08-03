@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIELD. — 静かに、深く読む。</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+:root{
+  --stone-50:#fafaf9; --stone-100:#f5f5f4; --stone-200:#e7e5e4; --stone-300:#d6d3d1;
+  --stone-400:#a8a29e; --stone-500:#78716c; --stone-600:#57534e; --stone-700:#44403c; --stone-900:#1c1917;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--stone-50);color:var(--stone-900);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit;}
+input{font-family:inherit;}
+p{margin:0;}
+.container{max-width:1152px;margin:0 auto;padding:0 1rem;}
+.container-narrow{max-width:768px;margin:0 auto;padding:0 1rem;}
+.container-mid{max-width:960px;margin:0 auto;padding:0 1rem;}
+@media(min-width:640px){.container,.container-narrow,.container-mid{padding:0 1.5rem;}}
+
+.site-header{position:sticky;top:0;z-index:40;background:var(--stone-50);border-bottom:1px solid var(--stone-200);}
+.site-header-inner{max-width:1152px;margin:0 auto;padding:0 1rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+@media(min-width:640px){.site-header-inner{padding:0 1.5rem;}}
+.logo-btn{display:flex;align-items:baseline;gap:.5rem;}
+.logo{font-size:1.25rem;font-weight:900;letter-spacing:-0.02em;}
+.tagline{display:none;font-size:.75rem;color:var(--stone-400);}
+@media(min-width:768px){.tagline{display:inline;}}
+.desktop-nav{display:none;align-items:center;gap:1.5rem;}
+@media(min-width:768px){.desktop-nav{display:flex;}}
+.nav-link{font-size:.875rem;font-weight:500;color:var(--stone-600);transition:color .15s;}
+.nav-link:hover{color:var(--stone-900);}
+.header-actions{display:flex;align-items:center;gap:1rem;}
+.icon-btn{color:var(--stone-500);display:flex;padding:.25rem;}
+.icon-btn:hover{color:var(--stone-900);}
+.desktop-only{display:none;}
+@media(min-width:768px){.desktop-only{display:flex;align-items:center;}}
+.mobile-only{display:block;}
+@media(min-width:768px){.mobile-only{display:none;}}
+.search-input{border:none;border-bottom:1px solid var(--stone-300);background:transparent;font-size:.875rem;padding:.25rem .1rem;width:9rem;outline:none;}
+.search-input:focus{border-color:var(--stone-900);}
+.mobile-menu{border-top:1px solid var(--stone-200);background:var(--stone-50);padding:1.25rem 1rem;display:flex;flex-direction:column;gap:1rem;}
+@media(min-width:768px){.mobile-menu{display:none;}}
+.mobile-link{font-size:1rem;font-weight:500;color:var(--stone-700);text-align:left;width:100%;}
+.mobile-link.bordered{padding-top:.75rem;border-top:1px solid var(--stone-200);}
+
+.top-bar{position:fixed;top:0;left:0;right:0;height:2px;z-index:50;}
+.top-bar-inner{height:100%;background:var(--stone-900);transition:width .3s ease,opacity .2s ease;width:0;opacity:0;}
+.top-bar-inner.loading{width:66%;opacity:1;}
+.top-bar-inner.done{width:100%;opacity:1;}
+
+.hero{padding:3rem 0 2rem;}
+@media(min-width:640px){.hero{padding:5rem 0 2rem;}}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:2.5rem;align-items:center;}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1fr 1fr;gap:4rem;}}
+.eyebrow{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--stone-500);margin-bottom:1rem;}
+.hero-title{font-size:2.25rem;font-weight:900;letter-spacing:-0.03em;line-height:1;margin:0 0 1.5rem;}
+@media(min-width:640px){.hero-title{font-size:3rem;}}
+@media(min-width:1024px){.hero-title{font-size:3.75rem;}}
+.hero-dek{font-size:1.125rem;color:var(--stone-600);margin-bottom:2rem;max-width:28rem;}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;font-weight:500;transition:all .15s;font-size:1rem;}
+.btn-filled{background:var(--stone-900);color:#fff;}
+.btn-filled:hover{background:var(--stone-600);}
+.btn-outline{border:1px solid var(--stone-900);color:var(--stone-900);background:transparent;}
+.btn-outline:hover{background:var(--stone-900);color:#fff;}
+
+.fig-caption{margin-top:.75rem;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--stone-500);}
+.img-block{aspect-ratio:16/9;background:var(--stone-100);border:1px solid var(--stone-200);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .5s;}
+.img-block.in-view{opacity:1;}
+.diagram-box{border:1px solid var(--stone-200);background:#fff;padding:1rem;opacity:0;transition:opacity .5s;}
+.diagram-box.in-view{opacity:1;}
+@media(min-width:640px){.diagram-box{padding:1.5rem;}}
+.legend{display:flex;gap:1.25rem;justify-content:center;margin-top:.5rem;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:.375rem;font-size:.75rem;color:var(--stone-500);}
+.legend-swatch{width:10px;height:10px;display:inline-block;}
+.unit-note{font-size:.75rem;color:var(--stone-400);margin-top:.75rem;text-align:center;}
+
+.audio-box{border:1px solid var(--stone-200);background:#fff;padding:1.25rem;display:flex;align-items:center;gap:1rem;opacity:0;transition:opacity .5s;}
+.audio-box.in-view{opacity:1;}
+.play-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--stone-900);color:#fff;flex-shrink:0;transition:background .15s;}
+.play-btn:hover{background:var(--stone-600);}
+.audio-title{font-size:.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.placeholder-note{font-size:.75rem;color:var(--stone-400);margin-top:.125rem;}
+.waveform{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:.5rem;}
+.wave-bar{width:3px;background:var(--stone-300);}
+.wave-bar.playing{animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+.video-box{aspect-ratio:16/9;background:var(--stone-900);border:1px solid var(--stone-200);position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .5s;}
+.video-box.in-view{opacity:1;}
+.video-play-circle{width:56px;height:56px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;}
+.video-label{position:absolute;bottom:.75rem;left:.75rem;color:#fff;font-size:.75rem;letter-spacing:.05em;}
+
+.pull-quote{border-left:2px solid var(--stone-900);padding:.25rem 0 .25rem 1.5rem;margin:.5rem 0;}
+.pull-quote p{font-size:1.25rem;font-weight:500;line-height:1.35;letter-spacing:-0.01em;}
+@media(min-width:640px){.pull-quote p{font-size:1.5rem;}}
+
+.category-pills{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;border-bottom:1px solid var(--stone-200);padding-bottom:1rem;}
+.pill{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;padding:.375rem .75rem;border:1px solid var(--stone-200);color:var(--stone-500);transition:border-color .15s;}
+.pill:hover{border-color:var(--stone-400);}
+.pill.active{border-color:var(--stone-900);background:var(--stone-900);color:#fff;}
+
+.section-label{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--stone-500);margin-bottom:1.5rem;}
+.article-grid{display:grid;grid-template-columns:1fr;gap:2.5rem 2rem;}
+@media(min-width:640px){.article-grid{grid-template-columns:1fr 1fr;}}
+@media(min-width:1024px){.article-grid{grid-template-columns:1fr 1fr 1fr;}}
+.card{cursor:pointer;opacity:0;transition:opacity .5s;text-align:left;}
+.card.in-view{opacity:1;}
+.card-image{aspect-ratio:16/9;background:var(--stone-100);border:1px solid var(--stone-200);display:flex;align-items:center;justify-content:center;transition:border-color .15s;}
+.card:hover .card-image{border-color:var(--stone-400);}
+.card-meta{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--stone-500);margin:.75rem 0 0;}
+.card-title{font-size:1.25rem;font-weight:700;letter-spacing:-0.01em;margin:.25rem 0 0;line-height:1.35;}
+.card:hover .card-title{text-decoration:underline;text-underline-offset:4px;}
+.card-excerpt{font-size:.875rem;color:var(--stone-600);margin:.5rem 0 0;line-height:1.6;}
+
+.recommended-section{padding:2.5rem 0;border-top:1px solid var(--stone-200);border-bottom:1px solid var(--stone-200);}
+
+.back-link{display:inline-flex;align-items:center;gap:.375rem;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--stone-500);margin-bottom:2rem;transition:color .15s;}
+.back-link:hover{color:var(--stone-900);}
+.article-title{font-size:1.875rem;font-weight:900;letter-spacing:-0.02em;line-height:1.15;margin:.75rem 0 1.25rem;}
+@media(min-width:640px){.article-title{font-size:3rem;}}
+.article-meta{display:flex;align-items:center;gap:1rem;font-size:.75rem;color:var(--stone-500);text-transform:uppercase;letter-spacing:.05em;padding-bottom:2rem;border-bottom:1px solid var(--stone-200);}
+.article-body{padding-top:2.5rem;display:flex;flex-direction:column;gap:1.75rem;font-size:1rem;line-height:1.75;color:#292524;}
+@media(min-width:640px){.article-body{font-size:1.125rem;}}
+.next-reads{padding-top:4rem;margin-top:1rem;border-top:1px solid var(--stone-200);}
+.next-read-item{display:block;text-align:left;width:100%;margin-bottom:1.5rem;}
+.next-read-item:last-child{margin-bottom:0;}
+
+.insights-wrap{max-width:960px;margin:0 auto;padding:3rem 1rem 4rem;}
+@media(min-width:640px){.insights-wrap{padding:4rem 1.5rem;}}
+.insights-title{font-size:1.875rem;font-weight:900;letter-spacing:-0.02em;margin:.5rem 0;}
+@media(min-width:640px){.insights-title{font-size:2.25rem;}}
+.insights-lede{color:var(--stone-600);max-width:36rem;margin-bottom:3rem;}
+.ppdac-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--stone-200);border:1px solid var(--stone-200);margin-bottom:3rem;}
+@media(min-width:640px){.ppdac-grid{grid-template-columns:repeat(5,1fr);}}
+.ppdac-cell{background:var(--stone-50);padding:1rem;}
+.ppdac-n{font-size:.75rem;color:var(--stone-400);}
+.ppdac-label{font-weight:700;font-size:.875rem;margin:.25rem 0 0;}
+.ppdac-desc{font-size:.75rem;color:var(--stone-500);margin:.25rem 0 0;}
+.panels{display:grid;grid-template-columns:1fr;gap:2rem;margin-bottom:3rem;}
+@media(min-width:1024px){.panels{grid-template-columns:1fr 1fr;}}
+.panel{border:1px solid var(--stone-200);padding:1.5rem;}
+.variant-row{padding:1rem;border:1px solid var(--stone-200);margin-bottom:1rem;}
+.variant-row.leading{border-color:var(--stone-900);}
+.variant-row:last-child{margin-bottom:0;}
+.variant-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.variant-head-left{display:flex;align-items:center;gap:.5rem;}
+.variant-badge{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;}
+.variant-badge.filled{background:var(--stone-900);color:#fff;}
+.variant-badge.outline{border:1px solid var(--stone-900);color:var(--stone-900);}
+.variant-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;font-size:.75rem;color:var(--stone-500);}
+.variant-stats b{display:block;color:var(--stone-900);font-size:1rem;font-weight:400;}
+.sim-btn{margin-top:1.5rem;width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;border:1px solid var(--stone-300);padding:.625rem;font-size:.875rem;font-weight:500;transition:border-color .15s;}
+.sim-btn:hover{border-color:var(--stone-900);}
+.sim-btn:disabled{opacity:.5;cursor:default;}
+.hint{font-size:.75rem;color:var(--stone-400);margin-top:.5rem;}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(min-width:640px){.metrics-grid{grid-template-columns:repeat(4,1fr);}}
+.metric-value{font-size:1.5rem;font-weight:900;letter-spacing:-0.02em;margin:0;}
+.metric-label{font-size:.875rem;font-weight:500;margin:.25rem 0 0;}
+.metric-note{font-size:.75rem;color:var(--stone-400);margin:.25rem 0 0;}
+.reset-row{display:flex;flex-wrap:wrap;gap:.25rem .75rem;font-size:.75rem;align-items:center;}
+.reset-link{color:var(--stone-400);text-decoration:underline;text-underline-offset:4px;letter-spacing:.05em;text-transform:uppercase;}
+.reset-link:hover{color:var(--stone-700);}
+
+.site-footer{border-top:1px solid var(--stone-200);margin-top:5rem;}
+.site-footer-inner{max-width:1152px;margin:0 auto;padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:1rem;text-align:center;}
+@media(min-width:640px){.site-footer-inner{flex-direction:row;padding:2.5rem 1.5rem;}}
+.footer-note{font-size:.75rem;color:var(--stone-400);letter-spacing:.02em;}
+
+.spin{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important;}
+  .img-block,.diagram-box,.audio-box,.video-box,.card{opacity:1!important;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+/* ============================== ICONS (自前SVG・外部依存なし) ============================== */
+function IconWrap({ children, size, className }) {
+  return (
+    <svg width={size || 20} height={size || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {children}
+    </svg>
+  );
+}
+function IconMenu(p){return <IconWrap {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></IconWrap>;}
+function IconX(p){return <IconWrap {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconWrap>;}
+function IconSearch(p){return <IconWrap {...p}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconWrap>;}
+function IconArrowRight(p){return <IconWrap {...p}><line x1="4" y1="12" x2="20" y2="12"/><polyline points="13 5 20 12 13 19"/></IconWrap>;}
+function IconArrowLeft(p){return <IconWrap {...p}><line x1="20" y1="12" x2="4" y2="12"/><polyline points="11 19 4 12 11 5"/></IconWrap>;}
+function IconPlay(p){return <IconWrap {...p}><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></IconWrap>;}
+function IconPause(p){return <IconWrap {...p}><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none"/></IconWrap>;}
+function IconChart(p){return <IconWrap {...p}><line x1="4" y1="20" x2="4" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="20" y1="20" x2="20" y2="14"/></IconWrap>;}
+function IconRefresh(p){return <IconWrap {...p}><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></IconWrap>;}
+function IconImage(p){return <IconWrap {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></IconWrap>;}
+
+/* ============================== 自前SVG棒グラフ(外部チャートライブラリ不使用) ============================== */
+function SimpleBarChart({ data, series, height, unit }) {
+  const h = height || 220;
+  const width = 600;
+  const padding = { top: 10, right: 10, bottom: 28, left: 34 };
+  const innerW = width - padding.left - padding.right;
+  const innerH = h - padding.top - padding.bottom;
+  const groupCount = data.length;
+  const seriesCount = series.length;
+  const maxVal = Math.max(1, ...data.flatMap((d) => series.map((s) => d[s.key] || 0)));
+  const groupWidth = innerW / groupCount;
+  const barGap = 6;
+  const barWidth = Math.max(4, (groupWidth - barGap * (seriesCount + 1)) / seriesCount);
+
+  return (
+    <svg viewBox={`0 0 ${width} ${h}`} width="100%" height={h} preserveAspectRatio="xMidYMid meet" role="img">
+      {[0, 0.5, 1].map((t, i) => {
+        const y = padding.top + innerH * (1 - t);
+        return <line key={i} x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="#e7e5e4" strokeDasharray="3 3" />;
+      })}
+      {[0, 0.5, 1].map((t, i) => {
+        const y = padding.top + innerH * (1 - t);
+        const val = Math.round(maxVal * t);
+        return <text key={i} x={padding.left - 6} y={y + 4} textAnchor="end" fontSize="11" fill="#78716c">{val}{unit || ''}</text>;
+      })}
+      {data.map((d, gi) => {
+        const groupX = padding.left + gi * groupWidth;
+        return (
+          <g key={gi}>
+            {series.map((s, si) => {
+              const val = d[s.key] || 0;
+              const barH = (val / maxVal) * innerH;
+              const x = groupX + barGap + si * (barWidth + barGap);
+              const y = padding.top + innerH - barH;
+              return <rect key={s.key} x={x} y={y} width={barWidth} height={Math.max(0, barH)} fill={s.color} rx="2" />;
+            })}
+            <text x={groupX + groupWidth / 2} y={h - 8} textAnchor="middle" fontSize="12" fill="#78716c">{d.name}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ============================== DATA ============================== */
+const CATEGORIES = ['テクノロジー', 'ビジネス', 'サイエンス', 'カルチャー'];
+
+const ARTICLES = [
+  { id:'ai-work', category:'テクノロジー', title:'生成AIは働き方をどう変えるか', dek:'実務にすぐ効く示唆を、5分で。',
+    excerpt:'資料作成から意思決定まで、生成AIは業務のどこに効くのか。3社の事例から見えた共通点を整理する。', readTime:6, date:'2026.07.28',
+    body:[
+      {type:'p', text:'生成AIの導入は「試してみた」段階から「業務に組み込む」段階に移りつつある。だが実際に時間を生み出しているのは、派手な自動化ではなく、地味な下準備の圧縮だ。'},
+      {type:'image', caption:'テクノロジー・概観'},
+      {type:'p', text:'資料のたたき台、議事録の要約、一次調査 —— いずれも「ゼロから作る」時間を「直す」時間に変える。この置き換えだけで、担当者の手元に戻ってくる時間は小さくない。'},
+      {type:'diagram', caption:'週あたりの業務時間(導入前後)', yLabel:'時間/週',
+        series:[{key:'before',label:'導入前',color:'#d6d3d1'},{key:'after',label:'導入後',color:'#1c1917'}],
+        data:[{name:'資料作成',before:8,after:3},{name:'議事録',before:4,after:1},{name:'一次調査',before:6,after:3}]},
+      {type:'p', text:'重要なのは、削減した時間をどこに再投資するかだ。取材した3社はいずれも、浮いた時間を「検証」と「対話」に振り向けていた。アウトプットの速度ではなく、判断の質が変わっている。'},
+      {type:'audio', caption:'音声解説', title:'編集部による3分解説'},
+      {type:'p', text:'一方で、導入がうまくいかない現場に共通するのは、既存の業務フローを変えずにツールだけを足していることだ。フローそのものを見直さない限り、時間は増えない。'},
+      {type:'video', caption:'現場取材', title:'導入企業への取材動画'},
+      {type:'quote', text:'速くなったのではなく、迷う時間が減った —— 導入企業の担当者の言葉が、この変化の本質を最もよく表している。'},
+      {type:'p', text:'生成AIが働き方を変えるのは、作業を代行するからではない。判断に使える時間を取り戻すからだ。'},
+    ]},
+  { id:'remote-team', category:'ビジネス', title:'リモートチームの生産性を高める組織設計', dek:'「会わない」を前提にした仕組みづくり。',
+    excerpt:'対面を前提にした慣習をそのまま持ち込むと、リモートチームは静かに機能不全に陥る。設計から見直す。', readTime:5, date:'2026.07.22',
+    body:[
+      {type:'p', text:'リモートチームが失速する原因の多くは、怠慢ではなく設計の不在にある。誰が何を決めるか、誰がいつまでに返すかが曖昧なまま「とりあえずSlack」で回している組織は多い。'},
+      {type:'image', caption:'ビジネス・概観'},
+      {type:'p', text:'機能していた組織に共通していたのは、意思決定の所在を明文化していたことだ。誰が最終決定者かが分かっていれば、非同期でも合意形成は止まらない。'},
+      {type:'diagram', caption:'意思決定までの日数(導入前後)', yLabel:'日数',
+        series:[{key:'before',label:'導入前',color:'#d6d3d1'},{key:'after',label:'導入後',color:'#1c1917'}],
+        data:[{name:'小規模決定',before:3,after:1},{name:'中規模決定',before:7,after:3},{name:'大規模決定',before:14,after:8}]},
+      {type:'p', text:'非同期を前提にすると、会議は「決めるため」ではなく「決まったことを深めるため」に使われるようになる。この順序が逆になっている組織ほど、会議は長く、決定は遅い。'},
+      {type:'p', text:'リモートは自由度が高い分、構造がなければ簡単に崩れる。設計とは自由を制限することではなく、自由に機能するための土台をつくることだ。'},
+    ]},
+  { id:'sleep-science', category:'サイエンス', title:'睡眠の科学:質の高い休息をつくる方法', dek:'眠る時間より、眠り方を変える。',
+    excerpt:'睡眠時間を削らずとも、眠りの質は設計できる。体内時計と光の使い方から見直す。', readTime:7, date:'2026.07.15',
+    body:[
+      {type:'p', text:'睡眠の質を左右するのは、寝る直前の行動よりも、起きてから最初の1時間の過ごし方だという研究が増えている。体内時計は「眠る合図」より「起きる合図」に強く反応する。'},
+      {type:'image', caption:'サイエンス・概観'},
+      {type:'p', text:'特に影響が大きいのが光だ。起床後に浴びる光の量と、深い睡眠にかかる時間には明確な相関がある。'},
+      {type:'diagram', caption:'起床後の光量と深い睡眠時間', yLabel:'分',
+        series:[{key:'value',label:'深い睡眠(分)',color:'#1c1917'}],
+        data:[{name:'明るい光',value:92},{name:'普通の光',value:74},{name:'暗いまま',value:58}]},
+      {type:'p', text:'つまり「早く寝る」努力よりも「朝、正しく光を浴びる」設計の方が、費用対効果が高い。特にカーテンを開けて過ごす最初の10分は、体内時計への影響が大きい。'},
+      {type:'audio', caption:'研究者インタビュー', title:'睡眠研究者インタビュー(抜粋)'},
+      {type:'p', text:'睡眠は意志の力で改善するものではなく、環境の設計で改善するものだ。何時に寝るかより、朝どう過ごすかを変える方が、再現性が高い。'},
+    ]},
+  { id:'focus-habits', category:'カルチャー', title:'集中力を取り戻すための5つの習慣', dek:'「意志の弱さ」のせいにしない。',
+    excerpt:'集中できないのは意志が弱いからではなく、環境が集中を妨げる設計になっているからだ。', readTime:4, date:'2026.07.10',
+    body:[
+      {type:'p', text:'集中力の低下を自己責任として語る言説は多いが、実際に効果があるのは精神論ではなく環境の調整だ。'},
+      {type:'image', caption:'カルチャー・概観'},
+      {type:'p', text:'最も効果が確認されているのは、作業開始までの手数を減らすことだ。「始めるまでの摩擦」が1つ増えるごとに、着手率は目に見えて下がる。'},
+      {type:'audio', caption:'実践編', title:'5つの習慣を音声で解説'},
+      {type:'p', text:'通知を切る、机の上を減らす、開始の合図を決める —— 地味な工夫の積み重ねが、意志力よりずっと再現性の高い解決策になる。'},
+      {type:'p', text:'集中力は生まれつきの資質ではなく、環境によって毎回作り直されるものだ。'},
+    ]},
+  { id:'startup-metrics', category:'ビジネス', title:'スタートアップの成長を支える指標設計', dek:'追う数字を減らすほど、速く進める。',
+    excerpt:'指標が多すぎるチームほど、実は前に進むスピードが遅い。本当に見るべき数字はいくつあればいいのか。', readTime:5, date:'2026.07.03',
+    body:[
+      {type:'p', text:'成長期のチームがよく陥る罠は、指標を増やしすぎることだ。見るべき数字が10個あるチームは、実質的に「何も見ていない」チームと変わらない。'},
+      {type:'image', caption:'ビジネス・概観'},
+      {type:'diagram', caption:'四半期ごとの主要指標の推移', yLabel:'成長率(%)',
+        series:[{key:'value',label:'成長率',color:'#1c1917'}],
+        data:[{name:'Q1',value:12},{name:'Q2',value:18},{name:'Q3',value:31},{name:'Q4',value:45}]},
+      {type:'p', text:'機能していたチームはどこも、四半期ごとに「今、本当に動かすべき1つの数字」を決め、それ以外は意図的に無視していた。'},
+      {type:'p', text:'指標設計とは、何を測るかではなく、何を測らないかを決める作業だ。'},
+    ]},
+  { id:'minimalism-city', category:'カルチャー', title:'都市を歩くように暮らす:ミニマリズムという選択', dek:'持たないことは、目的ではなく手段だ。',
+    excerpt:'モノを減らすことそのものは目的ではない。何のための余白か、を問い直す。', readTime:4, date:'2026.06.28',
+    body:[
+      {type:'p', text:'ミニマリズムが誤解されるのは、それが「モノを減らす技術」として消費されるときだ。本質は、何にどれだけの注意を払うかを自分で決め直すことにある。'},
+      {type:'image', caption:'カルチャー・概観'},
+      {type:'p', text:'都市を歩くとき、人は無数の選択肢の中から見るものを選び取っている。暮らしも同じで、余白があるほど、本当に見たいものが見えてくる。'},
+      {type:'p', text:'持たないことは目的ではない。何を持つかを、自分の意思で選び直すための手段だ。'},
+    ]},
+];
+
+const HERO_VARIANTS = { A:{label:'特集を読む', style:'filled'}, B:{label:'5分で読む', style:'outline'} };
+const TRUE_RATES = { A:0.06, B:0.09 };
+const EMPTY_EXPERIMENT = { A:{impressions:0,conversions:0}, B:{impressions:0,conversions:0} };
+
+/* ============================== LOGIC ============================== */
+async function loadHistory(){
+  try{ const res = await window.storage.get('user:view-history', false); return res ? JSON.parse(res.value) : []; }
+  catch(e){ return []; }
+}
+async function saveHistory(history){
+  try{ await window.storage.set('user:view-history', JSON.stringify(history), false); } catch(e){}
+}
+async function loadExperiment(){
+  try{ const res = await window.storage.get('experiment:hero-cta', true); return res ? JSON.parse(res.value) : EMPTY_EXPERIMENT; }
+  catch(e){ return EMPTY_EXPERIMENT; }
+}
+async function saveExperiment(stats){
+  try{ await window.storage.set('experiment:hero-cta', JSON.stringify(stats), true); } catch(e){}
+}
+function chooseVariant(stats){
+  if (stats.A.impressions === 0) return 'A';
+  if (stats.B.impressions === 0) return 'B';
+  const rateA = stats.A.conversions / stats.A.impressions;
+  const rateB = stats.B.conversions / stats.B.impressions;
+  if (Math.random() < 0.1) return Math.random() < 0.5 ? 'A' : 'B';
+  return rateA >= rateB ? 'A' : 'B';
+}
+function simulateBatch(stats, n){
+  const next = { A:{...stats.A}, B:{...stats.B} };
+  for (let i=0; i<n; i++){
+    const v = chooseVariant(next);
+    next[v] = { ...next[v], impressions: next[v].impressions + 1 };
+    if (Math.random() < TRUE_RATES[v]) next[v] = { ...next[v], conversions: next[v].conversions + 1 };
+  }
+  return next;
+}
+function recordView(history, article){
+  return [...history, { id:article.id, category:article.category, ts:Date.now() }].slice(-50);
+}
+function getRecommendations(history, articles, currentId, count){
+  const viewedIds = new Set(history.map((h) => h.id));
+  const categoryCounts = {};
+  history.forEach((h) => { categoryCounts[h.category] = (categoryCounts[h.category] || 0) + 1; });
+  const candidates = articles.filter((a) => a.id !== currentId && !viewedIds.has(a.id));
+  if (history.length === 0) return candidates.slice(0, count || 3);
+  return [...candidates].sort((a,b) => (categoryCounts[b.category]||0) - (categoryCounts[a.category]||0)).slice(0, count || 3);
+}
+
+/* ============================== HOOKS ============================== */
+function useInViewFade(){
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); observer.disconnect(); }
+    }, { threshold:0.1, rootMargin:'80px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, inView];
+}
+
+/* ============================== SMALL PARTS ============================== */
+function FigCaption({ figNum, label }){
+  return <p className="fig-caption mono">Fig.{String(figNum).padStart(2,'0')} — {label}</p>;
+}
+function ImageBlock({ figNum, caption }){
+  const [ref, inView] = useInViewFade();
+  return (
+    <figure ref={ref} style={{margin:0}}>
+      <div className={`img-block${inView ? ' in-view' : ''}`}><IconImage size={28} className="mono" /></div>
+      <FigCaption figNum={figNum} label={caption} />
+    </figure>
+  );
+}
+function DiagramBlock({ figNum, data, series, yLabel, caption }){
+  const [ref, inView] = useInViewFade();
+  return (
+    <figure ref={ref} style={{margin:0}}>
+      <div className={`diagram-box${inView ? ' in-view' : ''}`}>
+        <SimpleBarChart data={data} series={series} height={220} />
+        {series.length > 1 && (
+          <div className="legend">
+            {series.map((s) => (
+              <span key={s.key} className="legend-item mono"><span className="legend-swatch" style={{background:s.color}}></span>{s.label}</span>
+            ))}
+          </div>
+        )}
+        {yLabel && <p className="unit-note">単位: {yLabel}</p>}
+      </div>
+      <FigCaption figNum={figNum} label={caption} />
+    </figure>
+  );
+}
+function AudioBlock({ figNum, caption, title }){
+  const [playing, setPlaying] = useState(false);
+  const [ref, inView] = useInViewFade();
+  return (
+    <figure ref={ref} style={{margin:0}}>
+      <div className={`audio-box${inView ? ' in-view' : ''}`}>
+        <button className="play-btn" onClick={() => setPlaying((p) => !p)} aria-label={playing ? '一時停止' : '再生'}>
+          {playing ? <IconPause size={16} /> : <IconPlay size={16} />}
+        </button>
+        <div style={{flex:1, minWidth:0}}>
+          <p className="audio-title">{title}</p>
+          <p className="placeholder-note">サンプル音声(ファイル未設定)</p>
+          <div className="waveform" aria-hidden="true">
+            {Array.from({length:28}).map((_, i) => (
+              <span key={i} className={`wave-bar${playing ? ' playing' : ''}`}
+                style={{height:`${20 + ((i*37)%60)}%`, animationDelay:`${i*60}ms`}} />
+            ))}
+          </div>
+        </div>
+      </div>
+      <FigCaption figNum={figNum} label={caption} />
+    </figure>
+  );
+}
+function VideoBlock({ figNum, caption, title }){
+  const [ref, inView] = useInViewFade();
+  return (
+    <figure ref={ref} style={{margin:0}}>
+      <div className={`video-box${inView ? ' in-view' : ''}`}>
+        <div className="video-play-circle"><IconPlay size={20} className="mono" /></div>
+        <span className="video-label mono">{title}</span>
+      </div>
+      <p className="placeholder-note" style={{marginTop:'.5rem'}}>サンプル動画(ファイル未設定)</p>
+      <FigCaption figNum={figNum} label={caption} />
+    </figure>
+  );
+}
+function PullQuote({ text }){
+  return <blockquote className="pull-quote"><p>{text}</p></blockquote>;
+}
+function ArticleBody({ blocks }){
+  let fig = 0;
+  return (
+    <div className="article-body">
+      {blocks.map((b, i) => {
+        if (b.type === 'p') return <p key={i}>{b.text}</p>;
+        if (b.type === 'quote') return <PullQuote key={i} text={b.text} />;
+        if (b.type === 'image'){ fig++; return <ImageBlock key={i} figNum={fig} caption={b.caption} />; }
+        if (b.type === 'diagram'){ fig++; return <DiagramBlock key={i} figNum={fig} data={b.data} series={b.series} yLabel={b.yLabel} caption={b.caption} />; }
+        if (b.type === 'audio'){ fig++; return <AudioBlock key={i} figNum={fig} caption={b.caption} title={b.title} />; }
+        if (b.type === 'video'){ fig++; return <VideoBlock key={i} figNum={fig} caption={b.caption} title={b.title} />; }
+        return null;
+      })}
+    </div>
+  );
+}
+function ArticleCard({ article, onClick }){
+  const [ref, inView] = useInViewFade();
+  return (
+    <article ref={ref} onClick={onClick} role="button" tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') onClick(); }}
+      className={`card${inView ? ' in-view' : ''}`}>
+      <div className="card-image"><IconImage size={24} className="mono" /></div>
+      <p className="card-meta mono">{article.category} · {article.readTime}分</p>
+      <h3 className="card-title">{article.title}</h3>
+      <p className="card-excerpt">{article.excerpt}</p>
+    </article>
+  );
+}
+function TopProgressBar({ state }){
+  const cls = state === 'loading' ? 'top-bar-inner loading' : state === 'done' ? 'top-bar-inner done' : 'top-bar-inner';
+  return <div className="top-bar"><div className={cls} /></div>;
+}
+function VariantRow({ label, name, style, stats, rate, allocation, leading }){
+  return (
+    <div className={`variant-row${leading ? ' leading' : ''}`}>
+      <div className="variant-head">
+        <div className="variant-head-left">
+          <span className={`variant-badge ${style === 'filled' ? 'filled' : 'outline'} mono`}>{label}</span>
+          <span style={{fontWeight:500, fontSize:'.875rem'}}>{name}</span>
+        </div>
+        {leading && <span className="mono" style={{fontSize:'.75rem', letterSpacing:'.05em', textTransform:'uppercase'}}>優勢</span>}
+      </div>
+      <div className="variant-stats mono">
+        <div><b>{stats.impressions}</b>表示</div>
+        <div><b>{stats.conversions}</b>クリック</div>
+        <div><b>{(rate*100).toFixed(1)}%</b>転換率</div>
+        <div><b>{allocation}%</b>配分</div>
+      </div>
+    </div>
+  );
+}
+function MetricCard({ label, value, note }){
+  return (
+    <div>
+      <p className="metric-value">{value}</p>
+      <p className="metric-label">{label}</p>
+      <p className="metric-note">{note}</p>
+    </div>
+  );
+}
+
+/* ============================== LAYOUT ============================== */
+function Header({ onNavigateHome, onNavigateInsights, onNavigateCategory, mobileMenuOpen, setMobileMenuOpen, searchOpen, setSearchOpen, searchQuery, setSearchQuery }){
+  return (
+    <header className="site-header">
+      <div className="site-header-inner">
+        <button onClick={onNavigateHome} className="logo-btn">
+          <span className="logo">FIELD.</span>
+          <span className="tagline mono">静かに、深く読む。</span>
+        </button>
+        <nav className="desktop-nav">
+          {CATEGORIES.map((cat) => (
+            <button key={cat} onClick={() => { onNavigateHome(); onNavigateCategory(cat); }} className="nav-link">{cat}</button>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <div className="desktop-only">
+            {searchOpen ? (
+              <input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => { if (!searchQuery) setSearchOpen(false); }}
+                placeholder="検索…" className="search-input" />
+            ) : (
+              <button onClick={() => setSearchOpen(true)} aria-label="検索を開く" className="icon-btn"><IconSearch size={18} /></button>
+            )}
+          </div>
+          <button onClick={onNavigateInsights} aria-label="サイト分析" className="icon-btn desktop-only"><IconChart size={18} /></button>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="icon-btn mobile-only" aria-label="メニューを開く">
+            {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
+          </button>
+        </div>
+      </div>
+      {mobileMenuOpen && (
+        <div className="mobile-menu">
+          {CATEGORIES.map((cat) => (
+            <button key={cat} onClick={() => { onNavigateHome(); onNavigateCategory(cat); setMobileMenuOpen(false); }} className="mobile-link">{cat}</button>
+          ))}
+          <button onClick={() => { onNavigateInsights(); setMobileMenuOpen(false); }} className="mobile-link bordered">サイト分析</button>
+          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="検索…" className="search-input" style={{width:'100%', border:'1px solid var(--stone-300)', padding:'.5rem .75rem'}} />
+        </div>
+      )}
+    </header>
+  );
+}
+function Footer({ onNavigateInsights }){
+  return (
+    <footer className="site-footer">
+      <div className="site-footer-inner">
+        <span className="logo" style={{fontSize:'.875rem'}}>FIELD.</span>
+        <p className="footer-note mono">© 2026 FIELD. — 本サイトはデモンストレーション用のテンプレートです。</p>
+        <button onClick={onNavigateInsights} className="reset-link mono">サイト分析を見る</button>
+      </div>
+    </footer>
+  );
+}
+
+/* ============================== VIEWS ============================== */
+function Hero({ featured, variant, onCtaClick }){
+  const cta = HERO_VARIANTS[variant];
+  return (
+    <section className="container hero">
+      <div className="hero-grid">
+        <div>
+          <p className="eyebrow mono">Eyebrow · 注目の記事</p>
+          <h1 className="hero-title">{featured.title}</h1>
+          <p className="hero-dek">{featured.dek}</p>
+          <button onClick={onCtaClick} className={`btn ${cta.style === 'filled' ? 'btn-filled' : 'btn-outline'}`}>
+            {cta.label} <IconArrowRight size={16} />
+          </button>
+        </div>
+        <ImageBlock figNum={1} caption={`${featured.category} · 概観`} />
+      </div>
+    </section>
+  );
+}
+function RecommendedSection({ recommendations, onArticleClick }){
+  if (recommendations.length === 0) return null;
+  return (
+    <section className="container recommended-section">
+      <p className="section-label mono">あなたの関心領域から</p>
+      <div className="article-grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))'}}>
+        {recommendations.slice(0,3).map((a) => <ArticleCard key={a.id} article={a} onClick={() => onArticleClick(a.id)} />)}
+      </div>
+    </section>
+  );
+}
+function HomeView({ variant, onCtaClick, onArticleClick, recommendations, hasHistory, searchQuery, categoryFilter, setCategoryFilter }){
+  const featured = ARTICLES[0];
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return ARTICLES.filter((a) =>
+      a.id !== featured.id &&
+      (categoryFilter === 'すべて' || a.category === categoryFilter) &&
+      (q === '' || (a.title + a.category).toLowerCase().includes(q))
+    );
+  }, [categoryFilter, searchQuery, featured.id]);
+
+  return (
+    <React.Fragment>
+      <Hero featured={featured} variant={variant} onCtaClick={onCtaClick} />
+      <section className="container" style={{paddingTop:'4rem', paddingBottom:'1rem'}}>
+        <div className="category-pills">
+          {['すべて', ...CATEGORIES].map((cat) => (
+            <button key={cat} onClick={() => setCategoryFilter(cat)} className={`pill mono${categoryFilter === cat ? ' active' : ''}`}>{cat}</button>
+          ))}
+        </div>
+      </section>
+      {hasHistory && <RecommendedSection recommendations={recommendations} onArticleClick={onArticleClick} />}
+      <section className="container" style={{paddingTop:'3rem', paddingBottom:'3rem'}}>
+        <p className="section-label mono">{hasHistory ? 'すべての記事' : '注目の記事'}</p>
+        {filtered.length === 0 ? (
+          <p style={{color:'var(--stone-500)', padding:'4rem 0', textAlign:'center', fontSize:'.875rem'}}>該当する記事が見つかりません。</p>
+        ) : (
+          <div className="article-grid">
+            {filtered.map((a) => <ArticleCard key={a.id} article={a} onClick={() => onArticleClick(a.id)} />)}
+          </div>
+        )}
+      </section>
+    </React.Fragment>
+  );
+}
+function ArticleView({ article, onBack, recommendations, onArticleClick }){
+  return (
+    <article style={{paddingBottom:'5rem'}}>
+      <div className="container-narrow" style={{paddingTop:'2.5rem'}}>
+        <button onClick={onBack} className="back-link mono"><IconArrowLeft size={14} /> 記事一覧に戻る</button>
+        <p className="eyebrow mono">{article.category}</p>
+        <h1 className="article-title">{article.title}</h1>
+        <p className="hero-dek" style={{marginBottom:'1.5rem'}}>{article.dek}</p>
+        <div className="article-meta mono">
+          <span>編集部</span><span>{article.date}</span><span>{article.readTime}分</span>
+        </div>
+      </div>
+      <div className="container-narrow">
+        <ArticleBody blocks={article.body} />
+      </div>
+      {recommendations.length > 0 && (
+        <div className="container-narrow next-reads">
+          <p className="section-label mono">次に読む</p>
+          <div>
+            {recommendations.slice(0,3).map((a) => (
+              <button key={a.id} onClick={() => onArticleClick(a.id)} className="next-read-item">
+                <p className="card-meta mono">{a.category} · {a.readTime}分</p>
+                <p className="card-title" style={{fontSize:'1.125rem'}}>{a.title}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+function InsightsView({ experiment, onSimulate, simLoading, onResetHistory, historyResetState, onResetExperiment, expResetState, historyCount }){
+  const rateA = experiment.A.impressions > 0 ? experiment.A.conversions / experiment.A.impressions : 0;
+  const rateB = experiment.B.impressions > 0 ? experiment.B.conversions / experiment.B.impressions : 0;
+  const totalImpressions = experiment.A.impressions + experiment.B.impressions;
+  const leading = totalImpressions === 0 || rateA === rateB ? null : (rateA > rateB ? 'A' : 'B');
+  const allocA = totalImpressions > 0 ? Math.round((experiment.A.impressions / totalImpressions) * 100) : 50;
+  const allocB = 100 - allocA;
+  const chartData = [ {name:'A', rate:+(rateA*100).toFixed(1)}, {name:'B', rate:+(rateB*100).toFixed(1)} ];
+  const chartSeries = [
+    { key:'rate', label:'転換率', color:'#1c1917' },
+  ];
+  const steps = [
+    { n:'01', label:'Problem', desc:'CTAのクリック率を最大化' },
+    { n:'02', label:'Plan', desc:'2案を比較' },
+    { n:'03', label:'Data', desc:`${totalImpressions}件を収集` },
+    { n:'04', label:'Analysis', desc:'転換率を算出' },
+    { n:'05', label:'Conclusion', desc: leading ? `${leading}案が優勢` : '判定待ち' },
+  ];
+
+  return (
+    <div className="insights-wrap">
+      <p className="eyebrow mono">サイト分析</p>
+      <h1 className="insights-title">実験ダッシュボード</h1>
+      <p className="insights-lede">PPDACサイクルを自動で回し、ホームのCTAボタンを継続的に改善します。</p>
+
+      <div className="ppdac-grid">
+        {steps.map((s) => (
+          <div key={s.n} className="ppdac-cell">
+            <p className="ppdac-n mono">{s.n}</p>
+            <p className="ppdac-label">{s.label}</p>
+            <p className="ppdac-desc">{s.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="panels">
+        <div className="panel">
+          <p className="section-label mono">Plan · 2案</p>
+          <VariantRow label="A" name="特集を読む" style="filled" stats={experiment.A} rate={rateA} allocation={allocA} leading={leading==='A'} />
+          <VariantRow label="B" name="5分で読む" style="outline" stats={experiment.B} rate={rateB} allocation={allocB} leading={leading==='B'} />
+          <button onClick={onSimulate} disabled={simLoading} className="sim-btn">
+            <IconRefresh size={14} className={simLoading ? 'spin' : ''} />
+            {simLoading ? '処理中…' : 'トラフィックをシミュレート(+50件)'}
+          </button>
+          <p className="hint">実際の来訪データに、疑似的な来訪をバッチで追加し、学習の収束を確認できます。</p>
+        </div>
+        <div className="panel">
+          <p className="section-label mono">Analysis · 転換率</p>
+          <SimpleBarChart data={chartData} series={chartSeries} height={200} unit="%" />
+          <p className="hint">
+            {totalImpressions < 20 ? 'データが少ないため、探索(ランダム表示)の比率を高めに維持しています。' : `現在の配分 — A: ${allocA}% / B: ${allocB}%(成績の良い案を自動的に優先)`}
+          </p>
+        </div>
+      </div>
+
+      <div className="panel" style={{marginBottom:'3rem'}}>
+        <p className="section-label mono">パフォーマンス指標(目安)</p>
+        <div className="metrics-grid">
+          <MetricCard label="初期表示" value="瞬時" note="外部フォント・重量級ライブラリ不使用" />
+          <MetricCard label="画像読込" value="遅延" note="画面内に入ってから読込" />
+          <MetricCard label="レイアウトずれ" value="ほぼ0" note="画像枠を事前確保" />
+          <MetricCard label="ページ遷移" value="即時" note="サーバー往復なし" />
+        </div>
+        <p className="hint" style={{marginTop:'1.5rem'}}>※実測のLighthouseスコアではなく、実装した最適化施策に基づく目安です。</p>
+      </div>
+
+      <div className="reset-row">
+        <button onClick={onResetHistory} className="reset-link mono">
+          {historyResetState === 'confirm' ? 'もう一度押すと閲覧履歴を消去します' : `閲覧履歴をリセット(${historyCount}件)`}
+        </button>
+        <span style={{color:'var(--stone-300)'}}>/</span>
+        <button onClick={onResetExperiment} className="reset-link mono">
+          {expResetState === 'confirm' ? 'もう一度押すと実験データ(共有)を消去します' : '実験データをリセット(共有)'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== APP ============================== */
+function App(){
+  const [view, setView] = useState('home');
+  const [currentArticleId, setCurrentArticleId] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [experiment, setExperiment] = useState(EMPTY_EXPERIMENT);
+  const [variant, setVariant] = useState('A');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('すべて');
+  const [barState, setBarState] = useState('idle');
+  const [simLoading, setSimLoading] = useState(false);
+  const [historyResetState, setHistoryResetState] = useState('idle');
+  const [expResetState, setExpResetState] = useState('idle');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const [h, stats] = await Promise.all([loadHistory(), loadExperiment()]);
+      if (!mounted) return;
+      setHistory(h);
+      const v = chooseVariant(stats);
+      const nextStats = { ...stats, [v]: { ...stats[v], impressions: stats[v].impressions + 1 } };
+      setExperiment(nextStats);
+      setVariant(v);
+      saveExperiment(nextStats);
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const currentArticle = useMemo(() => ARTICLES.find((a) => a.id === currentArticleId) || null, [currentArticleId]);
+  const recommendations = useMemo(() => getRecommendations(history, ARTICLES, currentArticleId, 3), [history, currentArticleId]);
+
+  const navigateTo = useCallback((nextView, articleId) => {
+    setBarState('loading');
+    setMobileMenuOpen(false);
+    if (nextView === 'article' && articleId){
+      const article = ARTICLES.find((a) => a.id === articleId);
+      if (article){
+        setHistory((prev) => { const next = recordView(prev, article); saveHistory(next); return next; });
+      }
+    }
+    setView(nextView);
+    setCurrentArticleId(articleId || null);
+    if (typeof window !== 'undefined') window.scrollTo({ top:0, behavior:'smooth' });
+    setBarState('done');
+    setTimeout(() => setBarState('idle'), 300);
+  }, []);
+
+  const handleCtaClick = useCallback(() => {
+    setExperiment((prev) => {
+      const next = { ...prev, [variant]: { ...prev[variant], conversions: prev[variant].conversions + 1 } };
+      saveExperiment(next);
+      return next;
+    });
+    navigateTo('article', 'ai-work');
+  }, [variant, navigateTo]);
+
+  const handleSimulate = useCallback(() => {
+    setSimLoading(true);
+    setTimeout(() => {
+      setExperiment((prev) => { const next = simulateBatch(prev, 50); saveExperiment(next); return next; });
+      setSimLoading(false);
+    }, 450);
+  }, []);
+
+  const handleResetHistory = useCallback(() => {
+    setHistoryResetState((prevState) => {
+      if (prevState !== 'confirm'){ setTimeout(() => setHistoryResetState('idle'), 3000); return 'confirm'; }
+      setHistory([]); saveHistory([]); return 'idle';
+    });
+  }, []);
+
+  const handleResetExperiment = useCallback(() => {
+    setExpResetState((prevState) => {
+      if (prevState !== 'confirm'){ setTimeout(() => setExpResetState('idle'), 3000); return 'confirm'; }
+      setExperiment(EMPTY_EXPERIMENT); saveExperiment(EMPTY_EXPERIMENT); return 'idle';
+    });
+  }, []);
+
+  return (
+    <div>
+      <TopProgressBar state={barState} />
+      <Header
+        onNavigateHome={() => navigateTo('home')}
+        onNavigateInsights={() => navigateTo('insights')}
+        onNavigateCategory={(cat) => setCategoryFilter(cat)}
+        mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen}
+        searchOpen={searchOpen} setSearchOpen={setSearchOpen}
+        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+      />
+      <main>
+        {view === 'home' && (
+          <HomeView variant={variant} onCtaClick={handleCtaClick} onArticleClick={(id) => navigateTo('article', id)}
+            recommendations={recommendations} hasHistory={history.length > 0} searchQuery={searchQuery}
+            categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} />
+        )}
+        {view === 'article' && currentArticle && (
+          <ArticleView article={currentArticle} onBack={() => navigateTo('home')} recommendations={recommendations} onArticleClick={(id) => navigateTo('article', id)} />
+        )}
+        {view === 'insights' && (
+          <InsightsView experiment={experiment} onSimulate={handleSimulate} simLoading={simLoading}
+            onResetHistory={handleResetHistory} historyResetState={historyResetState}
+            onResetExperiment={handleResetExperiment} expResetState={expResetState} historyCount={history.length} />
+        )}
+      </main>
+      <Footer onNavigateInsights={() => navigateTo('insights')} />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
