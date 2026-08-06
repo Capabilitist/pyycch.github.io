@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>「空気」のマルチエージェント・シミュレーション</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    canvas {
+      touch-action: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/30">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            「空気」の数理モデル シミュレーター
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">同調圧力・発言コスト・本音と建前の相互作用モデル</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-open-readme" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          解説 / Readme
+        </button>
+        <button id="btn-share" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs md:text-sm font-medium rounded-lg shadow transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          Xで共有
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main class="max-w-7xl w-full mx-auto p-3 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+    <!-- Left Settings Panel (4 cols) -->
+    <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 flex flex-col gap-5 shadow-xl custom-scrollbar overflow-y-auto max-h-[85vh]">
+      
+      <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+        <h2 class="font-bold text-base text-indigo-300 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          パラメータ設定
+        </h2>
+        <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">設定</span>
+      </div>
+
+      <!-- Setting Mode Switch -->
+      <div class="bg-slate-950 p-1 rounded-xl flex text-xs font-medium border border-slate-800">
+        <button id="tab-mode-uniform" class="flex-1 py-1.5 text-center rounded-lg bg-indigo-600 text-white transition">一律設定</button>
+        <button id="tab-mode-random" class="flex-1 py-1.5 text-center rounded-lg text-slate-400 hover:text-slate-200 transition">ランダム(範囲)設定</button>
+      </div>
+
+      <!-- Global Parameters -->
+      <div class="space-y-4">
+        <!-- N: Agent Count -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <label for="param-N" class="font-medium text-slate-300">エージェント数 N</label>
+            <span id="val-N" class="font-mono text-indigo-400">30</span>
+          </div>
+          <input type="range" id="param-N" min="5" max="80" value="30" class="w-full accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+          <p class="text-[10px] text-slate-500">集団の全体の人数</p>
+        </div>
+
+        <!-- s: Initial Speakers -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <label for="param-s" class="font-medium text-slate-300">最初に発言する人数 s</label>
+            <span id="val-s" class="font-mono text-indigo-400">3</span>
+          </div>
+          <input type="range" id="param-s" min="1" max="15" value="3" class="w-full accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+          <p class="text-[10px] text-slate-500">初期状態で意見を表明する先陣の人数</p>
+        </div>
+
+        <!-- Topology -->
+        <div class="space-y-1">
+          <label for="param-topology" class="text-xs font-medium text-slate-300">ネットワーク構造</label>
+          <select id="param-topology" class="w-full bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+            <option value="complete">完全グラフ (全員と相互接続)</option>
+            <option value="random" selected>ランダムネットワーク (均等な繋がり)</option>
+            <option value="scalefree">スケールフリー (インフルエンサー型)</option>
+            <option value="smallworld">スモールワールド (局所クラスタ)</option>
+          </select>
+        </div>
+
+        <div class="border-t border-slate-800/80 my-2"></div>
+
+        <!-- Uniform Controls (No uniform x_i slider as per requirements) -->
+        <div id="panel-uniform" class="space-y-4">
+          <div class="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800 text-[11px] text-slate-400">
+            ※ 本音 $x_i$ は各エージェントごとに $[-1, 1]$ の範囲でランダム生成されます。
+          </div>
+
+          <!-- c_i: Conformity -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label for="param-c" class="font-medium text-slate-300">同調性 c_i (一律)</label>
+              <span id="val-c" class="font-mono text-indigo-400">1.50</span>
+            </div>
+            <input type="range" id="param-c" min="0" max="5" step="0.1" value="1.5" class="w-full accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+            <p class="text-[10px] text-slate-500">高いほど空気に敏感になり本音を隠す</p>
+          </div>
+
+          <!-- k_i: Cost -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label for="param-k" class="font-medium text-slate-300">発言コスト係数 k_i (一律)</label>
+              <span id="val-k" class="font-mono text-indigo-400">0.30</span>
+            </div>
+            <input type="range" id="param-k" min="0" max="2" step="0.05" value="0.3" class="w-full accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+            <p class="text-[10px] text-slate-500">高いほど沈黙を選択しやすくなる</p>
+          </div>
+
+          <!-- Y_i: Observed Count -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label for="param-Y" class="font-medium text-slate-300">観測可能数 Y_i (一律)</label>
+              <span id="val-Y" class="font-mono text-indigo-400">10</span>
+            </div>
+            <input type="range" id="param-Y" min="1" max="50" value="10" class="w-full accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+            <p class="text-[10px] text-slate-500">空気を推測するために参照する他者の数</p>
+          </div>
+        </div>
+
+        <!-- Random Range Controls -->
+        <div id="panel-random" class="space-y-4 hidden">
+          <!-- x Range -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label class="font-medium text-slate-300">本音 x_i の範囲</label>
+              <span id="val-x-range" class="font-mono text-indigo-400">[-1.00, 1.00]</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="range" id="param-x-min" min="-1" max="1" step="0.05" value="-1.0" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+              <input type="range" id="param-x-max" min="-1" max="1" step="0.05" value="1.0" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+            </div>
+          </div>
+
+          <!-- c Range -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label class="font-medium text-slate-300">同調性 c_i の範囲</label>
+              <span id="val-c-range" class="font-mono text-indigo-400">[0.20, 3.00]</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="range" id="param-c-min" min="0" max="5" step="0.1" value="0.2" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+              <input type="range" id="param-c-max" min="0" max="5" step="0.1" value="3.0" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+            </div>
+          </div>
+
+          <!-- k Range -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label class="font-medium text-slate-300">発言コスト k_i の範囲</label>
+              <span id="val-k-range" class="font-mono text-indigo-400">[0.05, 0.80]</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="range" id="param-k-min" min="0" max="2" step="0.05" value="0.05" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+              <input type="range" id="param-k-max" min="0" max="2" step="0.05" value="0.80" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+            </div>
+          </div>
+
+          <!-- Y Range -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <label class="font-medium text-slate-300">観測可能数 Y_i の範囲</label>
+              <span id="val-Y-range" class="font-mono text-indigo-400">[3, 15]</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="range" id="param-Y-min" min="1" max="50" value="3" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+              <input type="range" id="param-Y-max" min="1" max="50" value="15" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-1.5">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Visualization Panel (8 cols) -->
+    <section class="lg:col-span-8 flex flex-col gap-5">
+
+      <!-- Realtime Summary Stat Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+          <span class="text-[11px] font-medium text-slate-400">ステップ数 / 時間</span>
+          <span id="stat-step" class="text-xl font-bold font-mono text-indigo-400">0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+          <span class="text-[11px] font-medium text-slate-400">全体空気 (平均 m_i)</span>
+          <span id="stat-atmosphere" class="text-xl font-bold font-mono text-slate-200">0.00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+          <span class="text-[11px] font-medium text-slate-400">沈黙率 (発言なし)</span>
+          <span id="stat-silence-rate" class="text-xl font-bold font-mono text-amber-400">0%</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+          <span class="text-[11px] font-medium text-slate-400">本音と建前の乖離度</span>
+          <span id="stat-falsification" class="text-xl font-bold font-mono text-pink-400">0.00</span>
+        </div>
+      </div>
+
+      <!-- Network Canvas Container -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 relative shadow-xl">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-sm text-slate-200">エージェント相関・表明ネットワーク</h3>
+            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">ドラッグ移動可</span>
+          </div>
+          <!-- Legend -->
+          <div class="hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
+            <div class="flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+              <span>賛成(暖色)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span>
+              <span>反対(寒色)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-950 border border-slate-500 inline-block"></span>
+              <span>沈黙(黒枠)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative w-full h-[320px] md:h-[380px] bg-slate-950/80 rounded-xl overflow-hidden border border-slate-800/80">
+          <canvas id="network-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+          
+          <!-- Hover Tooltip -->
+          <div id="node-tooltip" class="absolute hidden bg-slate-900/95 backdrop-blur border border-indigo-500/50 rounded-lg p-2.5 shadow-xl text-xs text-slate-200 pointer-events-none z-20 max-w-xs space-y-1">
+            <div id="tooltip-title" class="font-bold text-indigo-400">エージェント #0</div>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+              <div>本音 x_i: <span id="tooltip-x" class="font-mono">0.0</span></div>
+              <div>表明 y_i: <span id="tooltip-y" class="font-mono">0.0</span></div>
+              <div>同調 c_i: <span id="tooltip-c" class="font-mono">0.0</span></div>
+              <div>コスト k_i: <span id="tooltip-k" class="font-mono">0.0</span></div>
+              <div class="col-span-2">推定空気 m_i: <span id="tooltip-m" class="font-mono">0.0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center text-[11px] text-slate-500 px-1">
+          <span>※ 中心色 = 本音 x_i / 外周枠 = 表明 y_i（黒は沈黙）</span>
+          <span>白線の太さ = 重み w_ij</span>
+        </div>
+      </div>
+
+      <!-- Execution Controls Bar (Moved between Network Canvas and Line Chart) -->
+      <div class="bg-slate-900 border border-indigo-500/30 rounded-xl p-3 shadow-lg flex flex-wrap justify-between items-center gap-3">
+        <div class="flex items-center gap-2 flex-grow sm:flex-grow-0">
+          <button id="btn-play-pause" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 text-sm">
+            <svg id="icon-play" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="label-play">スタート</span>
+          </button>
+          <button id="btn-step" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+            1ステップ進む
+          </button>
+          <button id="btn-reset" class="px-3 py-2.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-400 hover:text-slate-200 font-medium rounded-xl border border-slate-700/60 transition flex items-center gap-1 text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            リセット
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <span class="text-xs text-slate-400 whitespace-nowrap">速度:</span>
+          <input type="range" id="speed-slider" min="0.2" max="3" step="0.1" value="1.0" class="w-28 accent-indigo-500 bg-slate-800 rounded-lg cursor-pointer h-1.5">
+          <span id="speed-value" class="text-xs text-indigo-400 font-mono w-8">1.0x</span>
+        </div>
+      </div>
+
+      <!-- Line Chart Section -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 shadow-xl">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-sm text-slate-200">「空気」と発言傾向の推移 (時系列)</h3>
+          <button id="btn-chart-reset" class="text-[11px] text-slate-400 hover:text-slate-200 underline">クリア</button>
+        </div>
+        <div class="w-full h-48 md:h-56">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Model Overview Card -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 space-y-2">
+        <h4 class="font-bold text-indigo-300 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          モデルの概要と観察のポイント
+        </h4>
+        <p class="leading-relaxed">
+          このシミュレーションは、人々が「自分の本音」と「周囲の空気（他人の表明の加重平均）」の間で葛藤し、発言コストを考慮して表明（賛成/反対/沈黙）を決定するモデルです。
+        </p>
+        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+          <li><strong class="text-slate-200">沈黙の螺旋:</strong> 同調性 $c_i$ や発言コスト $k_i$ を高くすると、少数派が発言を諦め、本来は拮抗していた本音が一方的な「空気」に支配される現象が起きます。</li>
+          <li><strong class="text-slate-200">最初の数人 $s$:</strong> 最初に発言する人々の意見が偶発的に偏っていると、集団全体の本音と正反対の空気に固定化されることがあります。</li>
+        </ul>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Readme Modal -->
+  <div id="modal-readme" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+        <h3 class="font-bold text-lg text-indigo-300 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          モデルの解説と操作ガイド
+        </h3>
+        <button id="btn-close-readme" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-6 text-sm text-slate-300 custom-scrollbar leading-relaxed">
+        <section class="space-y-2">
+          <h4 class="font-bold text-base text-slate-100 border-b border-slate-800 pb-1">1. シミュレーションの背景</h4>
+          <p>
+            読書猿氏のブログ記事（クランの「虚偽表明モデル」等に基づく）で紹介された「空気の数理モデル」を可視化したマルチエージェント・シミュレーターです。
+          </p>
+          <p>
+            人間社会では、自分の「本音」と集団の「空気（多数派の意見）」が異なるとき、批判を恐れたり同調圧力に屈して「建前」を言ったり、沈黙を守ったりします。このシミュレーターでは、個々のエージェントが相互作用しながらどのような集団ダイナミクスを生むかを実験できます。
+          </p>
+        </section>
+
+        <section class="space-y-3">
+          <h4 class="font-bold text-base text-slate-100 border-b border-slate-800 pb-1">2. 数理モデルの仕組み</h4>
+          
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+            <h5 class="font-semibold text-indigo-400">■ 空気の推測 m_i</h5>
+            <p class="text-xs text-slate-400">
+              エージェント i は、すでに発言した他者 j の表明 y_j に対し、自身が付与した重み w_ij を用いて加重平均を計算し、現在の「空気 m_i」を推定します。
+            </p>
+            <div class="font-mono text-center py-1 text-indigo-300 text-xs">
+              m_i = ( Σ_{j ∈ 発言者} w_ij * y_j ) / ( Σ_{j ∈ 発言者} w_ij )
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+            <h5 class="font-semibold text-indigo-400">■ 意思決定と効用関数</h5>
+            <p class="text-xs text-slate-400">
+              エージェントは以下の2つの選択肢から、自身の損失を最小化（効用を最大化）する行動を選びます。
+            </p>
+            <ol class="list-decimal list-inside text-xs space-y-1 text-slate-300 pl-2">
+              <li><strong>沈黙する (y_i = 0):</strong> 発言コストはゼロですが、本音を発言できない心理的不快感が発生。</li>
+              <li><strong>発言する (y_i ≠ 0):</strong> 本音 x_i と空気 m_i のバランスをとった最適な表明 y_i* = (x_i + c_i * m_i) / (1 + c_i) を出力。ただし発言コスト k_i が発生。</li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <h4 class="font-bold text-base text-slate-100 border-b border-slate-800 pb-1">3. 各パラメータの解説と変更時の効果</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">N : エージェント数</span>
+              <p class="text-slate-400">集団の全体の人数。人数が多いほどネットワークが複雑化し、局所的な空気の形成が起こりやすくなります。</p>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">s : 最初に発言する人数</span>
+              <p class="text-slate-400">ステップ0で意見を言う先陣。s の人々の意見が偏っていると、その後の集団全体の空気が一気に引きずられます。</p>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">x_i : 本音 (-1 ～ +1)</span>
+              <p class="text-slate-400">+1が賛成、-1が反対、0が中立。本音の平均を正に設定しても、空気次第で反対が優勢になることがあります。</p>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">c_i : 同調性 (空気への敏感さ)</span>
+              <p class="text-slate-400">同調性が高いと、空気に逆らう発言を避け、本音とは異なる表明（建前）をするようになります。</p>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">k_i : 発言コスト係数</span>
+              <p class="text-slate-400">発言に伴うリスクや手間の大きさ。コストを上げると「サイレント・マジョリティ（沈黙する多数派）」が発生します。</p>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
+              <span class="font-bold text-indigo-300">Y_i : 観測可能数</span>
+              <p class="text-slate-400">空気を知るために参照する他者の数。小さいと狭い情報網（エコーチェンバー）になりやすくなります。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-2">
+          <h4 class="font-bold text-base text-slate-100 border-b border-slate-800 pb-1">4. 画面の色の意味</h4>
+          <ul class="list-disc list-inside text-xs space-y-1.5 text-slate-300">
+            <li><strong class="text-indigo-300">ノードの中心色（本音 x_i）:</strong> 暖色（赤/ピンク）= 賛成、寒色（水色/青）= 反対、白 = 中立(0付近)</li>
+            <li><strong class="text-indigo-300">ノードの外周リング（表明 y_i）:</strong> 発言している場合はその色。沈黙（y_i = 0）の場合は<strong>黒いリング</strong>で表示されます。</li>
+            <li><strong class="text-indigo-300">エッジ（白いリンク線）:</strong> エージェント i が相手 j を重視する重み w_ij。線の太さが重みの大きさを表します。</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-900 flex justify-end">
+        <button id="btn-modal-ok" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition">
+          閉じる
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-xs text-slate-500">
+    空気の数理モデル Multi-Agent Simulation
+  </footer>
+
+  <!-- Simulation Logic Script -->
+  <script>
+    class AtmosphereSimulation {
+      constructor() {
+        this.N = 30;
+        this.s = 3;
+        this.mode = 'uniform';
+        this.topology = 'random';
+
+        this.uniform_c = 1.5;
+        this.uniform_k = 0.3;
+        this.uniform_Y = 10;
+
+        this.range_x = [-1.0, 1.0];
+        this.range_c = [0.2, 3.0];
+        this.range_k = [0.05, 0.8];
+        this.range_Y = [3, 15];
+
+        this.stepCount = 0;
+        this.agents = [];
+        this.weights = [];
+        this.history = [];
+
+        this.initAgents();
+      }
+
+      initAgents() {
+        this.stepCount = 0;
+        this.agents = [];
+        this.history = [];
+
+        for (let i = 0; i < this.N; i++) {
+          let x, c, k, Y;
+          if (this.mode === 'uniform') {
+            x = this.getRandomArbitrary(-1.0, 1.0); // Uniform mode: Each agent randomly distributed in [-1, 1]
+            c = this.uniform_c;
+            k = this.uniform_k;
+            Y = Math.min(this.uniform_Y, this.N - 1);
+          } else {
+            x = this.getRandomArbitrary(this.range_x[0], this.range_x[1]);
+            c = this.getRandomArbitrary(this.range_c[0], this.range_c[1]);
+            k = this.getRandomArbitrary(this.range_k[0], this.range_k[1]);
+            Y = Math.round(this.getRandomArbitrary(this.range_Y[0], this.range_Y[1]));
+            Y = Math.max(1, Math.min(Y, this.N - 1));
+          }
+
+          const angle = (i / this.N) * Math.PI * 2;
+          const radius = 120 + Math.random() * 40;
+
+          this.agents.push({
+            id: i,
+            x_i: x,
+            c_i: c,
+            k_i: k,
+            Y_i: Y,
+            y_i: 0,
+            m_i: 0,
+            isSpeaker: false,
+            px: Math.cos(angle) * radius,
+            py: Math.sin(angle) * radius,
+            vx: 0,
+            vy: 0
+          });
+        }
+
+        this.buildNetworkWeights();
+
+        const indices = Array.from({ length: this.N }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+
+        const initialSpeakers = indices.slice(0, Math.min(this.s, this.N));
+        initialSpeakers.forEach(idx => {
+          const agent = this.agents[idx];
+          agent.isSpeaker = true;
+          agent.y_i = agent.x_i;
+        });
+
+        this.updatePerceivedAtmospheres();
+        this.recordHistory();
+      }
+
+      getRandomArbitrary(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      buildNetworkWeights() {
+        this.weights = Array.from({ length: this.N }, () => new Float64Array(this.N));
+
+        for (let i = 0; i < this.N; i++) {
+          const agent = this.agents[i];
+          const Y_i = agent.Y_i;
+
+          let candidates = [];
+          for (let j = 0; j < this.N; j++) {
+            if (i !== j) candidates.push(j);
+          }
+
+          if (this.topology === 'complete') {
+            candidates.forEach(j => {
+              this.weights[i][j] = 1.0;
+            });
+          } else if (this.topology === 'scalefree') {
+            candidates.sort((a, b) => (1 / (a + 1) + Math.random()) < (1 / (b + 1) + Math.random()) ? 1 : -1);
+            const chosen = candidates.slice(0, Y_i);
+            chosen.forEach(j => {
+              this.weights[i][j] = Math.random() + 0.5;
+            });
+          } else {
+            for (let iStep = candidates.length - 1; iStep > 0; iStep--) {
+              const rIdx = Math.floor(Math.random() * (iStep + 1));
+              [candidates[iStep], candidates[rIdx]] = [candidates[rIdx], candidates[iStep]];
+            }
+            const chosen = candidates.slice(0, Y_i);
+            chosen.forEach(j => {
+              this.weights[i][j] = Math.random() + 0.2;
+            });
+          }
+
+          let rowSum = 0;
+          for (let j = 0; j < this.N; j++) rowSum += this.weights[i][j];
+          if (rowSum > 0) {
+            for (let j = 0; j < this.N; j++) this.weights[i][j] /= rowSum;
+          }
+        }
+      }
+
+      updatePerceivedAtmospheres() {
+        for (let i = 0; i < this.N; i++) {
+          let sumWeightExpressed = 0;
+          let weightedSumY = 0;
+
+          for (let j = 0; j < this.N; j++) {
+            if (i === j) continue;
+            const w_ij = this.weights[i][j];
+            if (w_ij > 0 && this.agents[j].isSpeaker) {
+              sumWeightExpressed += w_ij;
+              weightedSumY += w_ij * this.agents[j].y_i;
+            }
+          }
+
+          if (sumWeightExpressed > 0) {
+            this.agents[i].m_i = weightedSumY / sumWeightExpressed;
+          } else {
+            this.agents[i].m_i = 0;
+          }
+        }
+      }
+
+      step() {
+        this.stepCount++;
+        this.updatePerceivedAtmospheres();
+
+        const order = Array.from({ length: this.N }, (_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+
+        for (let idx of order) {
+          const agent = this.agents[idx];
+          const x = agent.x_i;
+          const c = agent.c_i;
+          const k = agent.k_i;
+          const m = agent.m_i;
+
+          const lossSilent = x * x + c * m * m;
+
+          let yOpt = (x + c * m) / (1 + c);
+          yOpt = Math.max(-1, Math.min(1, yOpt));
+
+          const lossSpeak = Math.pow(yOpt - x, 2) + c * Math.pow(yOpt - m, 2) + k;
+
+          if (lossSpeak < lossSilent) {
+            agent.isSpeaker = true;
+            agent.y_i = yOpt;
+          } else {
+            agent.isSpeaker = false;
+            agent.y_i = 0;
+          }
+        }
+
+        this.recordHistory();
+      }
+
+      recordHistory() {
+        let totalX = 0;
+        let totalY = 0;
+        let totalM = 0;
+        let silentCount = 0;
+        let falsificationSum = 0;
+
+        for (let i = 0; i < this.N; i++) {
+          const a = this.agents[i];
+          totalX += a.x_i;
+          totalY += a.y_i;
+          totalM += a.m_i;
+          if (!a.isSpeaker) silentCount++;
+          falsificationSum += Math.abs(a.x_i - a.y_i);
+        }
+
+        const avgX = totalX / this.N;
+        const avgY = totalY / this.N;
+        const avgM = totalM / this.N;
+        const silenceRate = (silentCount / this.N) * 100;
+        const avgFalsification = falsificationSum / this.N;
+
+        this.history.push({
+          step: this.stepCount,
+          avgX,
+          avgY,
+          avgM,
+          silenceRate,
+          avgFalsification
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const sim = new AtmosphereSimulation();
+
+      const canvas = document.getElementById('network-canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const btnPlayPause = document.getElementById('btn-play-pause');
+      const btnStep = document.getElementById('btn-step');
+      const btnReset = document.getElementById('btn-reset');
+      const labelPlay = document.getElementById('label-play');
+      const iconPlay = document.getElementById('icon-play');
+      const speedSlider = document.getElementById('speed-slider');
+      const speedValue = document.getElementById('speed-value');
+
+      const tabUniform = document.getElementById('tab-mode-uniform');
+      const tabRandom = document.getElementById('tab-mode-random');
+      const panelUniform = document.getElementById('panel-uniform');
+      const panelRandom = document.getElementById('panel-random');
+
+      const sliderN = document.getElementById('param-N');
+      const valN = document.getElementById('val-N');
+      const sliderS = document.getElementById('param-s');
+      const valS = document.getElementById('val-s');
+      const selectTopology = document.getElementById('param-topology');
+
+      const sliderC = document.getElementById('param-c');
+      const valC = document.getElementById('val-c');
+      const sliderK = document.getElementById('param-k');
+      const valK = document.getElementById('val-k');
+      const sliderY = document.getElementById('param-Y');
+      const valY = document.getElementById('val-Y');
+
+      const sliderXMin = document.getElementById('param-x-min');
+      const sliderXMax = document.getElementById('param-x-max');
+      const valXRange = document.getElementById('val-x-range');
+      const sliderCMin = document.getElementById('param-c-min');
+      const sliderCMax = document.getElementById('param-c-max');
+      const valCRange = document.getElementById('val-c-range');
+      const sliderKMin = document.getElementById('param-k-min');
+      const sliderKMax = document.getElementById('param-k-max');
+      const valKRange = document.getElementById('val-k-range');
+      const sliderYMin = document.getElementById('param-Y-min');
+      const sliderYMax = document.getElementById('param-Y-max');
+      const valYRange = document.getElementById('val-Y-range');
+
+      const statStep = document.getElementById('stat-step');
+      const statAtmosphere = document.getElementById('stat-atmosphere');
+      const statSilenceRate = document.getElementById('stat-silence-rate');
+      const statFalsification = document.getElementById('stat-falsification');
+
+      const tooltip = document.getElementById('node-tooltip');
+
+      const btnOpenReadme = document.getElementById('btn-open-readme');
+      const btnCloseReadme = document.getElementById('btn-close-readme');
+      const btnModalOk = document.getElementById('btn-modal-ok');
+      const modalReadme = document.getElementById('modal-readme');
+      const btnShare = document.getElementById('btn-share');
+
+      let isRunning = false;
+      let animationFrameId = null;
+      let lastStepTime = 0;
+      let speedMultiplier = 1.0;
+
+      // Chart.js Setup
+      const chartCtx = document.getElementById('chart-canvas').getContext('2d');
+      const chart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: '空気 (平均 m_i)',
+              data: [],
+              borderColor: '#a855f7',
+              backgroundColor: 'rgba(168, 85, 247, 0.1)',
+              borderWidth: 2,
+              tension: 0.2,
+              fill: true
+            },
+            {
+              label: '平均表明 (建前 y_i)',
+              data: [],
+              borderColor: '#38bdf8',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              tension: 0.2
+            },
+            {
+              label: '平均本音 (x_i)',
+              data: [],
+              borderColor: '#f43f5e',
+              borderWidth: 1.5,
+              tension: 0.2
+            },
+            {
+              label: '沈黙率 (%)',
+              data: [],
+              borderColor: '#f59e0b',
+              borderWidth: 1.5,
+              yAxisID: 'y1',
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: {
+              grid: { color: '#1e293b' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            },
+            y: {
+              min: -1.0,
+              max: 1.0,
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8', font: { size: 10 } },
+              title: { display: true, text: '値 (-1~+1)', color: '#64748b', font: { size: 10 } }
+            },
+            y1: {
+              position: 'right',
+              min: 0,
+              max: 100,
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#f59e0b', font: { size: 10 } },
+              title: { display: true, text: '沈黙率 %', color: '#f59e0b', font: { size: 10 } }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#cbd5e1', font: { size: 11 }, boxWidth: 12 }
+            }
+          }
+        }
+      });
+
+      function updateChart() {
+        chart.data.labels = sim.history.map(h => h.step);
+        chart.data.datasets[0].data = sim.history.map(h => h.avgM);
+        chart.data.datasets[1].data = sim.history.map(h => h.avgY);
+        chart.data.datasets[2].data = sim.history.map(h => h.avgX);
+        chart.data.datasets[3].data = sim.history.map(h => h.silenceRate);
+        chart.update();
+      }
+
+      function updateStatsUI() {
+        statStep.textContent = sim.stepCount;
+        const lastHist = sim.history[sim.history.length - 1];
+        if (lastHist) {
+          statAtmosphere.textContent = lastHist.avgM.toFixed(2);
+          statSilenceRate.textContent = `${Math.round(lastHist.silenceRate)}%`;
+          statFalsification.textContent = lastHist.avgFalsification.toFixed(2);
+
+          if (lastHist.avgM > 0.15) {
+            statAtmosphere.className = "text-xl font-bold font-mono text-rose-400";
+          } else if (lastHist.avgM < -0.15) {
+            statAtmosphere.className = "text-xl font-bold font-mono text-cyan-400";
+          } else {
+            statAtmosphere.className = "text-xl font-bold font-mono text-slate-200";
+          }
+        }
+      }
+
+      let width = canvas.clientWidth;
+      let height = canvas.clientHeight;
+      
+      function resizeCanvas() {
+        width = canvas.parentElement.clientWidth;
+        height = canvas.parentElement.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      function getColorForValue(val) {
+        if (Math.abs(val) < 0.05) return '#f8fafc';
+        if (val > 0) {
+          const intensity = Math.min(1, val);
+          return `rgb(${Math.round(220 + 35 * intensity)}, ${Math.round(80 * (1 - intensity))}, ${Math.round(120 * (1 - intensity))})`;
+        } else {
+          const intensity = Math.min(1, Math.abs(val));
+          return `rgb(${Math.round(50 * (1 - intensity))}, ${Math.round(180 + 40 * intensity)}, ${Math.round(230 + 25 * intensity)})`;
+        }
+      }
+
+      function updatePhysics() {
+        const cx = width / 2;
+        const cy = height / 2;
+        const kRepel = 2500;
+        const kAttract = 0.05;
+
+        for (let i = 0; i < sim.N; i++) {
+          const a1 = sim.agents[i];
+          for (let j = i + 1; j < sim.N; j++) {
+            const a2 = sim.agents[j];
+            let dx = (a2.px - a1.px);
+            let dy = (a2.py - a1.py);
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            if (dist < 200) {
+              let force = kRepel / (dist * dist);
+              let fx = (dx / dist) * force;
+              let fy = (dy / dist) * force;
+              a1.vx -= fx;
+              a1.vy -= fy;
+              a2.vx += fx;
+              a2.vy += fy;
+            }
+          }
+
+          let cdx = cx - (a1.px + cx);
+          let cdy = cy - (a1.py + cy);
+          a1.vx += cdx * 0.005;
+          a1.vy += cdy * 0.005;
+        }
+
+        for (let i = 0; i < sim.N; i++) {
+          for (let j = 0; j < sim.N; j++) {
+            const w = sim.weights[i][j];
+            if (w > 0.05) {
+              const a1 = sim.agents[i];
+              const a2 = sim.agents[j];
+              let dx = (a2.px - a1.px);
+              let dy = (a2.py - a1.py);
+              let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+              let force = (dist - 90) * kAttract * w;
+              a1.vx += (dx / dist) * force;
+              a1.vy += (dy / dist) * force;
+            }
+          }
+        }
+
+        for (let i = 0; i < sim.N; i++) {
+          const a = sim.agents[i];
+          if (draggedNode === a) continue;
+          a.vx *= 0.82;
+          a.vy *= 0.82;
+          a.px += a.vx;
+          a.py += a.vy;
+
+          const padding = 25;
+          const maxR = Math.min(width, height) / 2 - padding;
+          const distFromCenter = Math.sqrt(a.px * a.px + a.py * a.py);
+          if (distFromCenter > maxR) {
+            a.px = (a.px / distFromCenter) * maxR;
+            a.py = (a.py / distFromCenter) * maxR;
+          }
+        }
+      }
+
+      function drawNetwork() {
+        ctx.clearRect(0, 0, width, height);
+
+        const cx = width / 2;
+        const cy = height / 2;
+
+        // 1. Draw Edges in WHITE (rgba(255, 255, 255, ...))
+        for (let i = 0; i < sim.N; i++) {
+          const a1 = sim.agents[i];
+          const x1 = a1.px + cx;
+          const y1 = a1.py + cy;
+
+          for (let j = 0; j < sim.N; j++) {
+            if (i === j) continue;
+            const w = sim.weights[i][j];
+            if (w > 0.08) {
+              const a2 = sim.agents[j];
+              const x2 = a2.px + cx;
+              const y2 = a2.py + cy;
+
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.lineWidth = Math.max(0.6, w * 4.5);
+              // Set edge color to white with alpha proportional to weight
+              ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(0.7, w * 0.9)})`;
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 2. Draw Agent Nodes
+        const nodeRadius = Math.max(8, Math.min(14, 280 / Math.sqrt(sim.N)));
+
+        for (let i = 0; i < sim.N; i++) {
+          const a = sim.agents[i];
+          const x = a.px + cx;
+          const y = a.py + cy;
+
+          // Outer Ring (y_i)
+          ctx.beginPath();
+          ctx.arc(x, y, nodeRadius + 3.5, 0, Math.PI * 2);
+          if (a.isSpeaker) {
+            ctx.fillStyle = getColorForValue(a.y_i);
+            ctx.shadowColor = getColorForValue(a.y_i);
+            ctx.shadowBlur = 8;
+          } else {
+            ctx.fillStyle = '#020617';
+            ctx.shadowBlur = 0;
+          }
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = a.isSpeaker ? '#ffffff' : '#475569';
+          ctx.stroke();
+
+          // Inner Circle (x_i)
+          ctx.beginPath();
+          ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+          ctx.fillStyle = getColorForValue(a.x_i);
+          ctx.fill();
+
+          if (hoveredNode === a) {
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius + 7, 0, Math.PI * 2);
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+      }
+
+      let draggedNode = null;
+      let hoveredNode = null;
+
+      function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function findNodeAt(x, y) {
+        const cx = width / 2;
+        const cy = height / 2;
+        const nodeRadius = Math.max(8, Math.min(14, 280 / Math.sqrt(sim.N)));
+
+        for (let i = 0; i < sim.N; i++) {
+          const a = sim.agents[i];
+          const nx = a.px + cx;
+          const ny = a.py + cy;
+          const dist = Math.hypot(x - nx, y - ny);
+          if (dist <= nodeRadius + 6) return a;
+        }
+        return null;
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        const { x, y } = getCanvasCoords(e);
+        const node = findNodeAt(x, y);
+        if (node) {
+          draggedNode = node;
+          canvas.setPointerCapture(e.pointerId);
+        }
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        const { x, y } = getCanvasCoords(e);
+        const cx = width / 2;
+        const cy = height / 2;
+
+        if (draggedNode) {
+          draggedNode.px = x - cx;
+          draggedNode.py = y - cy;
+          draggedNode.vx = 0;
+          draggedNode.vy = 0;
+        } else {
+          const node = findNodeAt(x, y);
+          hoveredNode = node;
+          if (node) {
+            showTooltip(e, node);
+          } else {
+            hideTooltip();
+          }
+        }
+      });
+
+      canvas.addEventListener('pointerup', (e) => {
+        if (draggedNode) {
+          canvas.releasePointerCapture(e.pointerId);
+          draggedNode = null;
+        }
+      });
+
+      function showTooltip(e, agent) {
+        tooltip.classList.remove('hidden');
+        document.getElementById('tooltip-title').textContent = `エージェント #${agent.id + 1}`;
+        document.getElementById('tooltip-x').textContent = agent.x_i.toFixed(2);
+        document.getElementById('tooltip-y').textContent = agent.isSpeaker ? agent.y_i.toFixed(2) : '0.00 (沈黙)';
+        document.getElementById('tooltip-c').textContent = agent.c_i.toFixed(2);
+        document.getElementById('tooltip-k').textContent = agent.k_i.toFixed(2);
+        document.getElementById('tooltip-m').textContent = agent.m_i.toFixed(2);
+
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
+
+        tooltip.style.left = `${Math.min(clientX + 12, width - 180)}px`;
+        tooltip.style.top = `${Math.min(clientY + 12, height - 120)}px`;
+      }
+
+      function hideTooltip() {
+        tooltip.classList.add('hidden');
+      }
+
+      function mainLoop(timestamp) {
+        updatePhysics();
+        drawNetwork();
+
+        if (isRunning && timestamp - lastStepTime > (1000 / (2 * speedMultiplier))) {
+          sim.step();
+          updateChart();
+          updateStatsUI();
+          lastStepTime = timestamp;
+        }
+
+        animationFrameId = requestAnimationFrame(mainLoop);
+      }
+
+      function togglePlay() {
+        isRunning = !isRunning;
+        if (isRunning) {
+          labelPlay.textContent = '一時停止';
+          btnPlayPause.classList.replace('bg-indigo-600', 'bg-amber-600');
+          btnPlayPause.classList.replace('hover:bg-indigo-500', 'hover:bg-amber-500');
+          iconPlay.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+        } else {
+          labelPlay.textContent = 'スタート';
+          btnPlayPause.classList.replace('bg-amber-600', 'bg-indigo-600');
+          btnPlayPause.classList.replace('hover:bg-amber-500', 'hover:bg-indigo-500');
+          iconPlay.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>`;
+        }
+      }
+
+      function resetSimulation() {
+        if (isRunning) togglePlay();
+        sim.initAgents();
+        updateChart();
+        updateStatsUI();
+      }
+
+      btnPlayPause.addEventListener('click', togglePlay);
+
+      btnStep.addEventListener('click', () => {
+        if (isRunning) togglePlay();
+        sim.step();
+        updateChart();
+        updateStatsUI();
+      });
+
+      btnReset.addEventListener('click', resetSimulation);
+
+      document.getElementById('btn-chart-reset').addEventListener('click', () => {
+        sim.history = [];
+        sim.recordHistory();
+        updateChart();
+      });
+
+      speedSlider.addEventListener('input', (e) => {
+        speedMultiplier = parseFloat(e.target.value);
+        speedValue.textContent = `${speedMultiplier.toFixed(1)}x`;
+      });
+
+      tabUniform.addEventListener('click', () => {
+        sim.mode = 'uniform';
+        tabUniform.classList.add('bg-indigo-600', 'text-white');
+        tabUniform.classList.remove('text-slate-400');
+        tabRandom.classList.remove('bg-indigo-600', 'text-white');
+        tabRandom.classList.add('text-slate-400');
+
+        panelUniform.classList.remove('hidden');
+        panelRandom.classList.add('hidden');
+        resetSimulation();
+      });
+
+      tabRandom.addEventListener('click', () => {
+        sim.mode = 'random';
+        tabRandom.classList.add('bg-indigo-600', 'text-white');
+        tabRandom.classList.remove('text-slate-400');
+        tabUniform.classList.remove('bg-indigo-600', 'text-white');
+        tabUniform.classList.add('text-slate-400');
+
+        panelRandom.classList.remove('hidden');
+        panelUniform.classList.add('hidden');
+        resetSimulation();
+      });
+
+      sliderN.addEventListener('input', (e) => {
+        const nVal = parseInt(e.target.value);
+        sim.N = nVal;
+        valN.textContent = nVal;
+        sliderS.max = Math.min(20, nVal);
+        if (sim.s > nVal) {
+          sim.s = nVal;
+          sliderS.value = nVal;
+          valS.textContent = nVal;
+        }
+        resetSimulation();
+      });
+
+      sliderS.addEventListener('input', (e) => {
+        const sVal = parseInt(e.target.value);
+        sim.s = sVal;
+        valS.textContent = sVal;
+        resetSimulation();
+      });
+
+      selectTopology.addEventListener('change', (e) => {
+        sim.topology = e.target.value;
+        resetSimulation();
+      });
+
+      sliderC.addEventListener('input', (e) => {
+        sim.uniform_c = parseFloat(e.target.value);
+        valC.textContent = sim.uniform_c.toFixed(2);
+        resetSimulation();
+      });
+      sliderK.addEventListener('input', (e) => {
+        sim.uniform_k = parseFloat(e.target.value);
+        valK.textContent = sim.uniform_k.toFixed(2);
+        resetSimulation();
+      });
+      sliderY.addEventListener('input', (e) => {
+        sim.uniform_Y = parseInt(e.target.value);
+        valY.textContent = sim.uniform_Y;
+        resetSimulation();
+      });
+
+      function updateRandomRanges() {
+        const xMin = parseFloat(sliderXMin.value);
+        const xMax = parseFloat(sliderXMax.value);
+        sim.range_x = [Math.min(xMin, xMax), Math.max(xMin, xMax)];
+        valXRange.textContent = `[${sim.range_x[0].toFixed(2)}, ${sim.range_x[1].toFixed(2)}]`;
+
+        const cMin = parseFloat(sliderCMin.value);
+        const cMax = parseFloat(sliderCMax.value);
+        sim.range_c = [Math.min(cMin, cMax), Math.max(cMin, cMax)];
+        valCRange.textContent = `[${sim.range_c[0].toFixed(2)}, ${sim.range_c[1].toFixed(2)}]`;
+
+        const kMin = parseFloat(sliderKMin.value);
+        const kMax = parseFloat(sliderKMax.value);
+        sim.range_k = [Math.min(kMin, kMax), Math.max(kMin, kMax)];
+        valKRange.textContent = `[${sim.range_k[0].toFixed(2)}, ${sim.range_k[1].toFixed(2)}]`;
+
+        const yMin = parseInt(sliderYMin.value);
+        const yMax = parseInt(sliderYMax.value);
+        sim.range_Y = [Math.min(yMin, yMax), Math.max(yMin, yMax)];
+        valYRange.textContent = `[${sim.range_Y[0]}, ${sim.range_Y[1]}]`;
+
+        resetSimulation();
+      }
+
+      [sliderXMin, sliderXMax, sliderCMin, sliderCMax, sliderKMin, sliderKMax, sliderYMin, sliderYMax].forEach(s => {
+        s.addEventListener('input', updateRandomRanges);
+      });
+
+      btnOpenReadme.addEventListener('click', () => modalReadme.classList.remove('hidden'));
+      btnCloseReadme.addEventListener('click', () => modalReadme.classList.add('hidden'));
+      btnModalOk.addEventListener('click', () => modalReadme.classList.add('hidden'));
+
+      btnShare.addEventListener('click', () => {
+        const text = encodeURIComponent(`「空気」の数理モデル シミュレーターで同調圧力と沈黙の螺旋を実験中！\n#マルチエージェント #空気の数理モデル`);
+        const url = encodeURIComponent(window.location.href);
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+      });
+
+      updateStatsUI();
+      updateChart();
+      animationFrameId = requestAnimationFrame(mainLoop);
+    });
+  </script>
+</body>
+</html>
+
